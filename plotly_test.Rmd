@@ -1,0 +1,103 @@
+---
+title: "Plotly graphs for weight lifting data"
+subtitle: "Developing Data Products - Week 3 Assignment"
+author: "Jakob Schelbert"
+date: "27 March 2017"
+output: ioslides_presentation
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r packages, echo=FALSE, warning=FALSE}
+suppressPackageStartupMessages({    
+    library(dplyr)
+    library(plotly)
+    library(ggplot2)
+    library(knitr)
+    library(readr)
+    seed <- 12345
+    set.seed(seed)
+    })
+```
+
+```{r load_data, cache=TRUE, message=FALSE, warning=FALSE, echo=FALSE}
+url1 <-"https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
+datafile1 <- "pml-training.csv"
+if (!file.exists(datafile1)) {
+  download.file(url1, datafile1)
+}
+url2 <-"https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
+datafile2 <- "pml-testing.csv"
+if (!file.exists(datafile2)) {
+  download.file(url2, datafile2)
+}
+training <- read_csv("pml-training.csv", col_types = cols(
+  user_name = "c",
+  raw_timestamp_part_1 = "d",
+  raw_timestamp_part_2 = "d",
+  cvtd_timestamp = col_datetime(format = "%d/%m/%Y %H:%M"),
+  new_window = "c",
+  classe = col_factor(c("A","B","C","D","E")),
+  .default = col_double())
+  )
+testing <- read_csv("pml-testing.csv", col_types = cols(
+  user_name = "c",
+  raw_timestamp_part_1 = "d",
+  raw_timestamp_part_2 = "d",
+  cvtd_timestamp = col_datetime(format = "%d/%m/%Y %H:%M"),
+  new_window = "c",
+  problem_id = "i",
+  .default = col_double())
+  )
+dim_train <- dim(training)
+dim_test <- dim(testing)
+train_condensed <- training %>% select(-contains("kurtosis_"),
+                                       -contains("skewness_"),
+                                       -contains("max_"),
+                                       -contains("min_"),
+                                       -contains("amplitude_"),
+                                       -contains("var_"),
+                                       -contains("avg_"),
+                                       -contains("stddev_"))
+```
+
+## Introduction
+For this assignment we come back to the data used in the **Practical Machine Learning** course.
+
+The data was originally created in the paper *Qualitative Activity Recognition of Weight Lifting Exercises* by Velloso, Bulling, Gellersen, Ugulino, and Fuks.
+More information can be found on the corresponding [website](http://groupware.les.inf.puc-rio.br/har). 
+
+We employ the newly introduced feature of plotly to directly display `ggplot` graphs.
+This makes it very convenient to reuse old code without too much hassle and additional coding.
+The original report can be accessed [here](https://jschelbert.github.io/pml-project/).
+
+## Explanation of data
+The authors describe the process of obtaining the data set as the following:
+
+*Participants were asked to perform one set of 10 repetitions of the Unilateral Dumbbell Biceps Curl in five different fashions:*
+*exactly according to the specification (Class A), throwing the elbows to the front (Class B), lifting the dumbbell only halfway (Class C), lowering the dumbbell only halfway (Class D) and throwing the hips to the front (Class E).*
+*Class A  corresponds  to  the  specified  execution  of  the  exercise, while  the  other  4  classes  correspond  to  common  mistakes.*
+
+##  Observations per activity & participant
+This plot shows the number of observations per each activity class with the colors indicating the individual participants.
+```{r}
+g <- ggplot(aes(x=classe, fill=user_name), data=train_condensed) + 
+    geom_bar() + labs(x="Activity class", fill="Participant")
+ggplotly(g)
+```
+
+
+
+## Plot of most important variables
+This plot shows the two most influencial variables which were used in a random forrest model.
+```{r}
+g <- ggplot(aes(x=roll_belt, y=roll_forearm, color=classe), data=train_condensed) + 
+    geom_point() + 
+    labs(color="Activity\nclass")
+ggplotly(g)
+```
+
+
+## Thank you for watching
